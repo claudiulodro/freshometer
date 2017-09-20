@@ -1,0 +1,15 @@
+{
+	"es_index": "localhost",
+	"results": 5,
+	"browser": false,
+	"sites": [
+		{
+			"url": "http://www.example.com/",
+			"selector": "p a"
+		}
+	],
+	"keywords": [
+		"information"
+	]
+}
+
