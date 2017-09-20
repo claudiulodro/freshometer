@@ -1,4 +1,4 @@
-import json, urllib, time, threading, re, webbrowser
+import json, urllib, time, threading, re, webbrowser, random
 from pyquery import PyQuery as pq
 
 class Freshometer:
@@ -76,16 +76,19 @@ class Indexer:
 
 	def query(self):
 		results = []
+		resultUrls = []
 
 		for i in range(0, len(self.links)):
+			if self.links[i]['sanitizedUrl'] in resultUrls:
+				continue
 			for keyword in self.config['keywords']:
 				if  keyword.lower() in self.links[i]['text'].lower():
 					results.append(self.links[i])
+					resultUrls.append(self.links[i]['sanitizedUrl'])
 					break
-			if len(results) >= self.config['results']:
-				break
-
-		return results
+		random.shuffle(results)
+		
+		return results[0:self.config['results']]
 
 def sanitizeLink(raw_link):
 	decoded = urllib.unquote(urllib.unquote(raw_link))
