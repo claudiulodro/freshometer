@@ -9,7 +9,17 @@ class Freshometer:
 	def __init__(self):
 		self.loadConfig()
 		self.indexer = Indexer(self.config)
+
 		self.readSites()
+		print('Indexing completed.')
+
+		results = self.querySites()
+		for result in results:
+			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source'])
+			if self.config['browser'] and result['sanitizedUrl']:
+				webbrowser.open(result['sanitizedUrl'])
+		
+		print('Query completed.')
 
 	def loadConfig(self):
 		json_data = open('config.json').read()
@@ -17,29 +27,26 @@ class Freshometer:
 
 	def readSites(self):
 		for site in self.config['sites']:
-			SiteIndexThread(site, self.indexer, self.config['browser']).start()
+			SiteIndexThread(site, self.indexer).start()
+
+		while(threading.activeCount()>1):
+			1==1
+
+	def querySites(self):
+		return self.indexer.query()
 
 class SiteIndexThread (threading.Thread):
 
 	indexer = {}
 	site = {}
-	useBrowser = False
 
-	def __init__(self, site, indexer, useBrowser = False):
+	def __init__(self, site, indexer):
 		threading.Thread.__init__(self)
 		self.site = site
 		self.indexer = indexer
 
 	def run(self):
 		self.indexer.index(self.readLinks())
-		results = self.indexer.query()
-		isFirst = True
-		for result in results:
-			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source']+"\n\n")
-			if self.useBrowser and isFirst and result['sanitizedUrl']:
-				webbrowser.open(result['sanitizedUrl'])
-				isFirst = False
-		exit()
 
 	def readLinks(self):
 		try:
@@ -47,6 +54,7 @@ class SiteIndexThread (threading.Thread):
 		except:
 			print ("Failed loading " + self.site['url'])
 			return []
+
 		selections = site(self.site['selector'])
 		links = []
 		for i in range(0, len(selections)):
@@ -85,7 +93,7 @@ class Indexer:
 					break
 		random.shuffle(results)
 		
-		return results[0:self.config['resultsPerSite']]
+		return results[0:self.config['results']]
 
 def sanitizeLink(raw_link):
 	if None == raw_link:
@@ -97,3 +105,4 @@ def sanitizeLink(raw_link):
 	return ''
 
 f = Freshometer()
+
