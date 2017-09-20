@@ -1,4 +1,4 @@
-import json, urllib, time, threading, re
+import json, urllib, time, threading, re, webbrowser
 from pyquery import PyQuery as pq
 
 class Freshometer:
@@ -20,6 +20,9 @@ class Freshometer:
 		results = self.querySites()
 		for result in results:
 			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source'])
+			if self.config['browser'] and result['sanitizedUrl']:
+				webbrowser.open(result['sanitizedUrl'])
+		
 		print('Query completed.')
 
 	def loadConfig(self):
