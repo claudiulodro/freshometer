@@ -10,13 +10,9 @@ class Freshometer:
 		self.loadConfig()
 		self.indexer = Indexer(self.config)
 
-		# check command line action
-
-		# if index
 		self.readSites()
 		print('Indexing completed.')
 
-		# if query
 		results = self.querySites()
 		for result in results:
 			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source'])
@@ -67,7 +63,6 @@ class SiteIndexThread (threading.Thread):
 
 		return links
 
-# TODO: Make this use ES
 class Indexer:
 
 	config = {}
