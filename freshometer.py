@@ -9,17 +9,7 @@ class Freshometer:
 	def __init__(self):
 		self.loadConfig()
 		self.indexer = Indexer(self.config)
-
 		self.readSites()
-		print('Indexing completed.')
-
-		results = self.querySites()
-		for result in results:
-			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source'])
-			if self.config['browser'] and result['sanitizedUrl']:
-				webbrowser.open(result['sanitizedUrl'])
-		
-		print('Query completed.')
 
 	def loadConfig(self):
 		json_data = open('config.json').read()
@@ -27,29 +17,36 @@ class Freshometer:
 
 	def readSites(self):
 		for site in self.config['sites']:
-			SiteIndexThread(site, self.indexer).start()
-
-		while(threading.activeCount()>1):
-			1==1
-
-	def querySites(self):
-		return self.indexer.query()
+			SiteIndexThread(site, self.indexer, self.config['browser']).start()
 
 class SiteIndexThread (threading.Thread):
 
 	indexer = {}
 	site = {}
+	useBrowser = False
 
-	def __init__(self, site, indexer):
+	def __init__(self, site, indexer, useBrowser = False):
 		threading.Thread.__init__(self)
 		self.site = site
 		self.indexer = indexer
 
 	def run(self):
 		self.indexer.index(self.readLinks())
+		results = self.indexer.query()
+		isFirst = True
+		for result in results:
+			print(result['text'] + ' || ' + result['sanitizedUrl'] + ' || ' + result['source']+"\n\n")
+			if self.useBrowser and isFirst and result['sanitizedUrl']:
+				webbrowser.open(result['sanitizedUrl'])
+				isFirst = False
+		exit()
 
 	def readLinks(self):
-		site = pq(self.site['url'])
+		try:
+			site = pq(self.site['url'])
+		except:
+			print ("Failed loading " + self.site['url'])
+			return []
 		selections = site(self.site['selector'])
 		links = []
 		for i in range(0, len(selections)):
@@ -88,9 +85,11 @@ class Indexer:
 					break
 		random.shuffle(results)
 		
-		return results[0:self.config['results']]
+		return results[0:self.config['resultsPerSite']]
 
 def sanitizeLink(raw_link):
+	if None == raw_link:
+		return ''
 	decoded = urllib.unquote(urllib.unquote(raw_link))
 	linkMatch = re.search(r"(https?\:\/\/.*)", decoded)
 	if linkMatch:
